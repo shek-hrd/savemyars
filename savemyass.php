@@ -1,0 +1,712 @@
+import React, { useState } from 'react';
+import { ChevronRight, DollarSign, Briefcase, TrendingUp, AlertCircle, CheckCircle, Search, Clock, Target, Edit, Printer, Save, Info, ExternalLink, Gift } from 'lucide-react';
+
+const SaveMyAssApp = () => {
+  const [currentStep, setCurrentStep] = useState('assessment');
+  const [answers, setAnswers] = useState({});
+  const [solutions, setSolutions] = useState([]);
+  const [actionPlan, setActionPlan] = useState([]);
+  const [showTooltip, setShowTooltip] = useState(null);
+
+  const assessmentQuestions = [
+    {
+      id: 'hasIncome',
+      question: 'Do you currently have any income?',
+      type: 'radio',
+      options: ['Yes, stable income', 'Yes, but irregular', 'No income currently']
+    },
+    {
+      id: 'hasInvestment',
+      question: 'Do you have any money to invest?',
+      type: 'radio',
+      options: ['Yes, substantial amount ($1000+)', 'Yes, small amount ($100-1000)', 'No money to invest']
+    },
+    {
+      id: 'debtLevel',
+      question: 'What\'s your current debt situation?',
+      type: 'radio',
+      options: ['No debt', 'Manageable debt', 'High debt', 'Overwhelming debt']
+    },
+    {
+      id: 'riskTolerance',
+      question: 'How comfortable are you with risk/gambling?',
+      type: 'radio',
+      options: ['Very comfortable', 'Somewhat comfortable', 'Not comfortable', 'Prefer guaranteed returns']
+    },
+    {
+      id: 'techSavvy',
+      question: 'How tech-savvy are you?',
+      type: 'radio',
+      options: ['Expert level', 'Good with apps/websites', 'Basic computer skills', 'Need simple solutions']
+    },
+    {
+      id: 'skills',
+      question: 'What skills do you have? (Select all that apply)',
+      type: 'checkbox',
+      options: ['Writing/Content Creation', 'Design/Art', 'Programming/Tech', 'Sales/Marketing', 'Teaching/Tutoring', 'Manual Labor', 'Customer Service', 'Gaming', 'Social Media', 'Other/None']
+    },
+    {
+      id: 'timeAvailable',
+      question: 'How much time can you dedicate daily?',
+      type: 'radio',
+      options: ['1-2 hours', '3-4 hours', '5-6 hours', '8+ hours (full time)']
+    },
+    {
+      id: 'urgency',
+      question: 'How urgent is your financial situation?',
+      type: 'radio',
+      options: ['Not urgent, planning ahead', 'Somewhat urgent (1-3 months)', 'Very urgent (weeks)', 'Critical (days)']
+    }
+  ];
+
+  const handleAnswerChange = (questionId, value, isCheckbox = false) => {
+    setAnswers(prev => {
+      if (isCheckbox) {
+        const currentValues = prev[questionId] || [];
+        const newValues = currentValues.includes(value) 
+          ? currentValues.filter(v => v !== value)
+          : [...currentValues, value];
+        return { ...prev, [questionId]: newValues };
+      } else {
+        return { ...prev, [questionId]: value };
+      }
+    });
+  };
+
+  const getIncomeEstimate = (type, timeCommitment) => {
+    const timeMultiplier = {
+      '1-2 hours': 0.25,
+      '3-4 hours': 0.5,
+      '5-6 hours': 0.75,
+      '8+ hours (full time)': 1
+    };
+
+    const baseRates = {
+      gig: { daily: 80, weekly: 400, monthly: 1600 },
+      freelance: { daily: 120, weekly: 600, monthly: 2400 },
+      micro: { daily: 15, weekly: 75, monthly: 300 },
+      crypto: { daily: 25, weekly: 125, monthly: 500 },
+      surveys: { daily: 10, weekly: 50, monthly: 200 },
+      investment: { monthly: 50, yearly: 600 }
+    };
+
+    const multiplier = timeMultiplier[timeCommitment] || 0.5;
+    const base = baseRates[type] || baseRates.micro;
+    
+    return {
+      daily: Math.round((base.daily || 0) * multiplier),
+      weekly: Math.round((base.weekly || 0) * multiplier),
+      monthly: Math.round((base.monthly || 0) * multiplier)
+    };
+  };
+
+  const generateSolutions = () => {
+    const newSolutions = [];
+    const newActionPlan = [];
+    const timeCommitment = answers.timeAvailable || '3-4 hours';
+    const isRiskTolerant = answers.riskTolerance?.includes('comfortable');
+    const isTechSavvy = answers.techSavvy?.includes('Expert') || answers.techSavvy?.includes('Good');
+
+    // Emergency solutions for critical situations
+    if (answers.urgency === 'Critical (days)') {
+      const gigIncome = getIncomeEstimate('gig', timeCommitment);
+      newSolutions.push({
+        title: 'Emergency Cash Solutions',
+        description: 'Immediate income opportunities',
+        type: 'emergency',
+        income: gigIncome,
+        timeframe: '24-48 hours',
+        items: [
+          { 
+            name: 'DoorDash/Uber Eats delivery', 
+            link: 'https://doordash.com/dasher/signup',
+            explanation: 'Start earning within hours. No experience needed, just a vehicle/bike and smartphone. Peak times (lunch/dinner) pay more.',
+            income: '$15-25/hour'
+          },
+          { 
+            name: 'TaskRabbit handyman/assembly', 
+            link: 'https://taskrabbit.com/become-a-tasker',
+            explanation: 'Get paid for simple tasks like furniture assembly, moving help, or cleaning. Higher pay than delivery.',
+            income: '$20-60/hour'
+          },
+          { 
+            name: 'Facebook Marketplace - sell items', 
+            link: 'https://facebook.com/marketplace',
+            explanation: 'Sell unused electronics, furniture, or clothes. Price competitively for quick sales.',
+            income: '$50-500+ per item'
+          },
+          { 
+            name: 'Plasma donation', 
+            link: 'https://cslplasma.com/become-a-donor',
+            explanation: 'Donate plasma twice weekly. First-time donors often get bonuses. Completely safe and regulated.',
+            income: '$50-100/week'
+          }
+        ]
+      });
+    }
+
+    // Crypto and win opportunities for risk-tolerant users
+    if (isRiskTolerant && isTechSavvy) {
+      const cryptoIncome = getIncomeEstimate('crypto', timeCommitment);
+      newSolutions.push({
+        title: 'Crypto & Win Opportunities',
+        description: 'High-risk, high-reward earning methods',
+        type: 'crypto',
+        income: cryptoIncome,
+        timeframe: 'Variable',
+        items: [
+          { 
+            name: 'Coinbase Earn - Learn & Earn', 
+            link: 'https://coinbase.com/earn',
+            explanation: 'Watch educational videos about crypto and earn free tokens. No investment required, just time.',
+            income: '$3-50 per course'
+          },
+          { 
+            name: 'Brave Browser BAT rewards', 
+            link: 'https://brave.com',
+            explanation: 'Earn Basic Attention Tokens for viewing privacy-respecting ads while browsing normally.',
+            income: '$5-20/month'
+          },
+          { 
+            name: 'Axie Infinity/Play-to-Earn games', 
+            link: 'https://axieinfinity.com',
+            explanation: 'Play blockchain games to earn cryptocurrency. Requires initial investment but can be profitable.',
+            income: '$100-1000/month'
+          },
+          { 
+            name: 'Crypto airdrops & bounties', 
+            link: 'https://airdropalert.com',
+            explanation: 'Participate in new crypto project launches for free tokens. Follow social media for opportunities.',
+            income: '$10-500 per airdrop'
+          },
+          { 
+            name: 'Online poker/skill gaming', 
+            link: 'https://pokerstars.com',
+            explanation: 'If skilled at poker or competitive gaming, can be profitable. Start with freerolls to build bankroll.',
+            income: 'Highly variable'
+          }
+        ]
+      });
+    }
+
+    // Free loan opportunities
+    if (answers.debtLevel?.includes('High') || answers.debtLevel?.includes('Overwhelming')) {
+      newSolutions.push({
+        title: 'Zero-Interest Financing',
+        description: 'Borrow money without paying extra',
+        type: 'financing',
+        income: { monthly: 'Savings: $50-500' },
+        timeframe: '1-2 weeks approval',
+        items: [
+          { 
+            name: 'Chase Slate Edge 0% APR', 
+            link: 'https://creditcards.chase.com/cash-back-credit-cards/freedom/slate-edge',
+            explanation: '15 months 0% APR on purchases and balance transfers. No annual fee. Use for debt consolidation.',
+            income: 'Save 20-25% annually on interest'
+          },
+          { 
+            name: 'Citi Simplicity 0% APR', 
+            link: 'https://citicards.com/cards/credit/application/flow.action?ID=3007',
+            explanation: '21 months 0% APR - longest available. Perfect for large purchases or debt consolidation.',
+            income: 'Save hundreds in interest'
+          },
+          { 
+            name: 'PayPal Pay in 4', 
+            link: 'https://paypal.com/us/digital-wallet/ways-to-pay/buy-now-pay-later',
+            explanation: 'Split purchases into 4 payments over 6 weeks with no interest if paid on time.',
+            income: 'No interest if paid on schedule'
+          },
+          { 
+            name: 'Kiva Microloan (0% interest)', 
+            link: 'https://kiva.org/borrow',
+            explanation: 'Get business loans from individuals worldwide with 0% interest. Takes longer but completely free money.',
+            income: '$500-15,000 at 0% interest'
+          }
+        ]
+      });
+    }
+
+    // Click-to-earn and micro-opportunities
+    if (answers.hasInvestment?.includes('No money') || answers.timeAvailable?.includes('1-2')) {
+      const microIncome = getIncomeEstimate('micro', timeCommitment);
+      newSolutions.push({
+        title: 'Click-to-Earn & Micro Tasks',
+        description: 'Small tasks, consistent income',
+        type: 'micro',
+        income: microIncome,
+        timeframe: 'Immediate start',
+        items: [
+          { 
+            name: 'Swagbucks', 
+            link: 'https://swagbucks.com/refer/shekhrd',
+            explanation: 'Watch videos, take surveys, shop online for points. Most reliable rewards platform with multiple earning methods.',
+            income: '$1-5/hour'
+          },
+          { 
+            name: 'Amazon Mechanical Turk', 
+            link: 'https://mturk.com',
+            explanation: 'Perform small tasks like data entry, transcription, image tagging. Higher pay than surveys for quality work.',
+            income: '$3-12/hour'
+          },
+          { 
+            name: 'Clickworker', 
+            link: 'https://clickworker.com',
+            explanation: 'AI training tasks, writing, web research. European platform with good rates for native English speakers.',
+            income: '$5-15/hour'
+          },
+          { 
+            name: 'Honeygain (passive income)', 
+            link: 'https://honeygain.com',
+            explanation: 'Sell unused internet bandwidth. Completely passive - just install and forget.',
+            income: '$20-50/month passive'
+          }
+        ]
+      });
+    }
+
+    // Investment-based solutions
+    if (answers.hasInvestment?.includes('substantial')) {
+      const investIncome = getIncomeEstimate('investment', timeCommitment);
+      newSolutions.push({
+        title: 'Investment Opportunities',
+        description: 'High-yield options for substantial capital',
+        type: 'investment',
+        income: investIncome,
+        timeframe: '1-30 days to start earning',
+        items: [
+          { 
+            name: 'Marcus by Goldman Sachs HYSA', 
+            link: 'https://marcus.com/savings',
+            explanation: 'Currently offering 4.5% APY with no minimum balance. FDIC insured and completely safe.',
+            income: '4.5% annual return'
+          },
+          { 
+            name: 'Fundrise Real Estate', 
+            link: 'https://fundrise.com',
+            explanation: 'Invest in real estate without buying property. Historical returns of 8-12% annually.',
+            income: '8-12% annual return'
+          },
+          { 
+            name: 'Series I Savings Bonds', 
+            link: 'https://treasurydirect.gov',
+            explanation: 'Government bonds that protect against inflation. Currently paying 5.27% with tax advantages.',
+            income: '5.27% annual, tax-advantaged'
+          }
+        ]
+      });
+    }
+
+    // Skill-based income
+    const skills = answers.skills || [];
+    if (skills.length > 0) {
+      const freelanceIncome = getIncomeEstimate('freelance', timeCommitment);
+      const skillOpportunities = {
+        'Writing/Content Creation': [
+          { 
+            name: 'Upwork copywriting', 
+            link: 'https://upwork.com',
+            explanation: 'Premium freelance platform. Build profile with portfolio samples. Blog posts, sales copy, and technical writing pay well.',
+            income: '$15-100/hour'
+          },
+          { 
+            name: 'Contently', 
+            link: 'https://contently.com/freelancers',
+            explanation: 'High-end content marketing platform. Requires application but pays premium rates for quality writers.',
+            income: '$30-150/hour'
+          }
+        ],
+        'Design/Art': [
+          { 
+            name: '99designs contests', 
+            link: 'https://99designs.com',
+            explanation: 'Design contests for logos, websites, packaging. Win rates improve with experience and good portfolio.',
+            income: '$200-2000 per contest win'
+          },
+          { 
+            name: 'Etsy digital products', 
+            link: 'https://etsy.com/sell',
+            explanation: 'Sell digital art, templates, printables. Create once, sell infinitely. No shipping or inventory needed.',
+            income: '$500-5000/month passive'
+          }
+        ],
+        'Programming/Tech': [
+          { 
+            name: 'Toptal (elite freelancers)', 
+            link: 'https://toptal.com/freelance',
+            explanation: 'Top 3% of freelancers. Rigorous screening but highest rates. Full-time remote opportunities available.',
+            income: '$50-200/hour'
+          },
+          { 
+            name: 'GitHub bug bounties', 
+            link: 'https://github.com/marketplace/security',
+            explanation: 'Find security vulnerabilities in open source projects. Pays well for legitimate discoveries.',
+            income: '$100-10000 per bug'
+          }
+        ],
+        'Teaching/Tutoring': [
+          { 
+            name: 'Cambly conversation practice', 
+            link: 'https://cambly.com/tutors',
+            explanation: 'Teach English conversation to international students. No teaching credentials required, just be a native speaker.',
+            income: '$10.20/hour'
+          },
+          { 
+            name: 'Preply online tutoring', 
+            link: 'https://preply.com/teach',
+            explanation: 'Tutor any subject you\'re expert in. Set your own rates and schedule. Students pay premium for quality tutors.',
+            income: '$10-80/hour'
+          }
+        ],
+        'Gaming': [
+          { 
+            name: 'Twitch streaming', 
+            link: 'https://twitch.tv',
+            explanation: 'Stream gameplay with entertaining commentary. Monetize through donations, subscriptions, and sponsors.',
+            income: '$0-10000+/month'
+          },
+          { 
+            name: 'GameTester', 
+            link: 'https://gametester.gg',
+            explanation: 'Test video games before release. Get paid to find bugs and provide feedback on gameplay.',
+            income: '$15-25/hour'
+          }
+        ]
+      };
+
+      skills.forEach(skill => {
+        if (skillOpportunities[skill]) {
+          newSolutions.push({
+            title: `${skill} Opportunities`,
+            description: 'Monetize your existing skills',
+            type: 'skill',
+            income: freelanceIncome,
+            timeframe: '1-7 days to first earnings',
+            items: skillOpportunities[skill]
+          });
+        }
+      });
+    }
+
+    // Generate action plan
+    const urgencyLevel = answers.urgency;
+    if (urgencyLevel?.includes('Critical') || urgencyLevel?.includes('Very urgent')) {
+      newActionPlan.push(
+        { step: 'Day 1', action: 'Sign up for 2-3 gig platforms (DoorDash, TaskRabbit)', priority: 'high', income: '$50-150' },
+        { step: 'Day 2', action: 'List 5+ items for sale on Facebook Marketplace', priority: 'high', income: '$100-500' },
+        { step: 'Day 3', action: 'Apply for plasma donation if eligible', priority: 'medium', income: '$50-100/week' },
+        { step: 'Week 1', action: 'Set up skill-based freelance profiles', priority: 'medium', income: '$200-1000/week' }
+      );
+    } else {
+      newActionPlan.push(
+        { step: 'Day 1', action: 'Complete financial assessment and research top 3 opportunities', priority: 'high', income: '$0' },
+        { step: 'Week 1', action: 'Set up primary income streams (freelance/gig work)', priority: 'high', income: '$200-800/week' },
+        { step: 'Week 2', action: 'Launch secondary income experiments (crypto/micro tasks)', priority: 'medium', income: '$50-200/week' },
+        { step: 'Month 2', action: 'Optimize and scale successful strategies', priority: 'low', income: '2x current earnings' }
+      );
+    }
+
+    setSolutions(newSolutions);
+    setActionPlan(newActionPlan);
+    setCurrentStep('results');
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSave = () => {
+    const data = {
+      answers,
+      solutions,
+      actionPlan,
+      generatedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'save-my-ass-plan.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const renderAssessment = () => (
+    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">Financial Assessment</h2>
+        <p className="text-gray-600">Answer these questions to get personalized solutions with income estimates</p>
+      </div>
+
+      <div className="space-y-6">
+        {assessmentQuestions.map((question, index) => (
+          <div key={question.id} className="border-b pb-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              {index + 1}. {question.question}
+            </h3>
+            <div className="space-y-2">
+              {question.options.map(option => (
+                <label key={option} className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <input
+                    type={question.type === 'checkbox' ? 'checkbox' : 'radio'}
+                    name={question.id}
+                    value={option}
+                    checked={
+                      question.type === 'checkbox' 
+                        ? (answers[question.id] || []).includes(option)
+                        : answers[question.id] === option
+                    }
+                    onChange={() => handleAnswerChange(question.id, option, question.type === 'checkbox')}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="text-gray-700">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <button
+          onClick={generateSolutions}
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2"
+        >
+          <Search className="w-5 h-5" />
+          <span>Find My Solutions</span>
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const getSolutionIcon = (type) => {
+    switch(type) {
+      case 'emergency': return <AlertCircle className="w-6 h-6 text-red-500" />;
+      case 'investment': return <TrendingUp className="w-6 h-6 text-green-500" />;
+      case 'skill': return <Briefcase className="w-6 h-6 text-blue-500" />;
+      case 'micro': return <DollarSign className="w-6 h-6 text-purple-500" />;
+      case 'financing': return <Target className="w-6 h-6 text-orange-500" />;
+      case 'crypto': return <Target className="w-6 h-6 text-yellow-500" />;
+      default: return <CheckCircle className="w-6 h-6 text-gray-500" />;
+    }
+  };
+
+  const getPriorityColor = (priority) => {
+    switch(priority) {
+      case 'high': return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const renderResults = () => (
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Header with controls */}
+      <div className="text-center bg-white rounded-lg shadow-lg p-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-2">Your Personalized Recovery Plan</h2>
+        <p className="text-gray-600 mb-4">Based on your situation, here are your best options with income estimates</p>
+        
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={() => setCurrentStep('assessment')}
+            className="bg-blue-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
+            <Edit className="w-4 h-4" />
+            <span>Edit Answers</span>
+          </button>
+          <button
+            onClick={handlePrint}
+            className="bg-green-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center space-x-2"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Print Plan</span>
+          </button>
+          <button
+            onClick={handleSave}
+            className="bg-purple-600 text-white py-2 px-4 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center space-x-2"
+          >
+            <Save className="w-4 h-4" />
+            <span>Save Plan</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Action Plan */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <Clock className="w-6 h-6 mr-2 text-blue-600" />
+          Action Timeline
+        </h3>
+        <div className="grid gap-4">
+          {actionPlan.map((item, index) => (
+            <div key={index} className={`p-4 rounded-lg border ${getPriorityColor(item.priority)}`}>
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="font-semibold">{item.step}: </span>
+                  <span>{item.action}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium uppercase">{item.priority} Priority</div>
+                  <div className="text-sm font-bold">Est. Income: {item.income}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Solutions */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {solutions.map((solution, index) => (
+          <div key={index} className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                {getSolutionIcon(solution.type)}
+                <div className="ml-3">
+                  <h3 className="text-xl font-bold text-gray-800">{solution.title}</h3>
+                  <p className="text-gray-600">{solution.description}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Income estimates */}
+            {solution.income && (
+              <div className="bg-green-50 p-3 rounded-lg mb-4">
+                <div className="text-sm font-semibold text-green-800">Estimated Income:</div>
+                <div className="text-green-700">
+                  {solution.income.daily && `$${solution.income.daily}/day • `}
+                  {solution.income.weekly && `$${solution.income.weekly}/week • `}
+                  {solution.income.monthly && `$${solution.income.monthly}/month`}
+                  {typeof solution.income.monthly === 'string' && solution.income.monthly}
+                </div>
+                <div className="text-xs text-green-600">Timeframe: {solution.timeframe}</div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {solution.items.map((item, itemIndex) => (
+                <div key={itemIndex} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <span className="font-medium text-gray-800">{item.name}</span>
+                        <button
+                          onMouseEnter={() => setShowTooltip(`${index}-${itemIndex}`)}
+                          onMouseLeave={() => setShowTooltip(null)}
+                          className="relative"
+                        >
+                          <Info className="w-4 h-4 text-blue-500" />
+                          {showTooltip === `${index}-${itemIndex}` && (
+                            <div className="absolute z-10 w-64 p-3 bg-gray-800 text-white text-sm rounded-lg shadow-lg -top-2 left-6">
+                              <div className="mb-2 font-semibold">Why this works:</div>
+                              <div>{item.explanation}</div>
+                              <div className="mt-2 text-green-300">Income: {item.income}</div>
+                            </div>
+                          )}
+                        </button>
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">Est: {item.income}</div>
+                    </div>
+                    <a 
+                      href={item.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="ml-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors flex items-center space-x-1"
+                    >
+                      <span>Start</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Donation Section */}
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg p-6 text-center">
+        <div className="flex items-center justify-center mb-4">
+          <Gift className="w-8 h-8 mr-3" />
+          <h3 className="text-2xl font-bold">Created by shekhrd</h3>
+        </div>
+        <p className="mb-4">Found this helpful? Support the development with a crypto donation!</p>
+        <div className="bg-white/10 rounded-lg p-4 mb-4">
+          <div className="font-mono text-sm break-all">0x6f602be9fccf656c8c3e9f36d2064d580264b393</div>
+        </div>
+        <div className="text-sm opacity-90">
+          <p className="mb-2"><strong>Compatible Networks:</strong></p>
+          <p>Ethereum (ETH) • Polygon (MATIC) • Binance Smart Chain (BNB) • Arbitrum • Optimism</p>
+          <p className="mt-2 text-xs">Any ERC-20 token accepted</p>
+        </div>
+      </div>
+
+      {/* Restart Button */}
+      <div className="text-center">
+        <button
+          onClick={() => {
+            setCurrentStep('assessment');
+            setAnswers({});
+            setSolutions([]);
+            setActionPlan([]);
+          }}
+          className="bg-gray-600 text-white py-2 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+        >
+          Start New Assessment
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderWelcome = () => (
+    <div className="max-w-2xl mx-auto text-center bg-white rounded-lg shadow-lg p-8">
+      <div className="mb-6">
+        <h1 className="text-4xl font-bold text-gray-800 mb-4">Save My Ass</h1>
+        <p className="text-xl text-gray-600 mb-6">Your Personal Financial Recovery Assistant</p>
+      </div>
+      
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-blue-50 p-6 rounded-lg">
+          <DollarSign className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+          <h3 className="font-semibold text-gray-800 mb-2">Zero to Hero</h3>
+          <p className="text-gray-600 text-sm">Start earning even with no money to invest</p>
+        </div>
+        <div className="bg-green-50 p-6 rounded-lg">
+          <TrendingUp className="w-12 h-12 text-green-600 mx-auto mb-4" />
+          <h3 className="font-semibold text-gray-800 mb-2">Maximize Returns</h3>
+          <p className="text-gray-600 text-sm">Get the most from what you have to invest</p>
+        </div>
+        <div className="bg-purple-50 p-6 rounded-lg">
+          <Briefcase className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+          <h3 className="font-semibold text-gray-800 mb-2">Find Work</h3>
+          <p className="text-gray-600 text-sm">Discover online jobs and income opportunities</p>
+        </div>
+        <div className="bg-orange-50 p-6 rounded-lg">
+          <Target className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+          <h3 className="font-semibold text-gray-800 mb-2">Strategic Loans</h3>
+          <p className="text-gray-600 text-sm">Find beneficial financing options</p>
+        </div>
+      </div>
+
+      <button
+        onClick={() => setCurrentStep('assessment')}
+        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-8 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center space-x-2 mx-auto"
+      >
+        <span>Start Your Recovery</span>
+        <ChevronRight className="w-5 h-5" />
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 py-8 px-4">
+      {currentStep === 'welcome' && renderWelcome()}
+      {currentStep === 'assessment' && renderAssessment()}
+      {currentStep === 'results' && renderResults()}
+    </div>
+  );
+};
+
+export default SaveMyAssApp;
