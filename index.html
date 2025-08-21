@@ -15,7 +15,7 @@
       ChevronRight, DollarSign, Briefcase, TrendingUp, AlertCircle, CheckCircle, Search, Clock, Target, Edit, Printer, Save, Info, ExternalLink, Gift
     } from "https://esm.sh/lucide-react@0.302.0";
 
-    function SaveMyAssApp() {
+    const SaveMyAssApp = () => {
       const [currentStep, setCurrentStep] = useState('assessment');
       const [answers, setAnswers] = useState({});
       const [solutions, setSolutions] = useState([]);
@@ -49,7 +49,10 @@
 
       const getIncomeEstimate = (type, timeCommitment) => {
         const timeMultiplier = {
-          '1-2 hours': 0.25, '3-4 hours': 0.5, '5-6 hours': 0.75, '8+ hours (full time)': 1
+          '1-2 hours': 0.25,
+          '3-4 hours': 0.5,
+          '5-6 hours': 0.75,
+          '8+ hours (full time)': 1
         };
         const baseRates = {
           gig: { daily: 80, weekly: 400, monthly: 1600 },
@@ -74,9 +77,6 @@
         const timeCommitment = answers.timeAvailable || '3-4 hours';
         const isRiskTolerant = answers.riskTolerance?.includes('comfortable');
         const isTechSavvy = answers.techSavvy?.includes('Expert') || answers.techSavvy?.includes('Good');
-
-        // (contents of your generateSolutions logic here, unchanged)
-        // ... for brevity, please copy the function's logic from your react.file
 
         // Emergency solutions for critical situations
         if (answers.urgency === 'Critical (days)') {
@@ -230,9 +230,6 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       };
-
-      // Rendering functions: renderAssessment, renderResults, renderWelcome, etc.
-      // ... (use the renderAssessment, renderResults, renderWelcome from your original react.file, adapting className and handlers as needed)
 
       const getSolutionIcon = (type) => {
         switch(type) {
@@ -473,9 +470,8 @@
           {currentStep === 'results' && renderResults()}
         </div>
       );
-    }
+    };
 
-    // Render the React app
     createRoot(document.getElementById("root")).render(<SaveMyAssApp />);
   </script>
 </body>
